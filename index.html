@@ -1,423 +1,443 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Markdown Maker — WYSIWYG → Markdown（GitHub Pages）</title>
-
-  <!-- Toast UI Editor (WYSIWYG + Markdown) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.3.0/dist/toastui-editor.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@toast-ui/editor@3.3.0/dist/toastui-editor-all.min.js"></script>
-
-  <!-- Prism (コードハイライト for preview) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.css">
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
-
-  <style>
-    :root{
-      --maxw:1200px;
-      --bg:#0b0c10; --card:#0f1117; --muted:#9aa;
-      --accent:#4f97ff; --btn:#1a1d24;
-    }
-    html,body{height:100%; margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif; background:var(--bg); color:#e6e6e6;}
-    header{position:sticky; top:0; background:#0e1013; border-bottom:1px solid #15171a; z-index:30;}
-    .wrap{max-width:var(--maxw); margin:0 auto; padding:12px;}
-    .top-row{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
-    .title{font-weight:700; font-size:18px;}
-    .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;}
-    button, label.btn{appearance:none; border:1px solid #2a2e36; background:var(--btn); color:#e6e6e6; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600;}
-    button:hover, label.btn:hover{background:#232731;}
-    .small{padding:6px 8px; font-size:13px;}
-    main{max-width:var(--maxw); margin:14px auto; padding:0 12px 40px;}
-    .layout{display:grid; grid-template-columns: 1fr 420px; gap:16px; align-items:start;}
-    .card{background:var(--card); border:1px solid #23262b; border-radius:12px; padding:12px;}
-    #editor{border-radius:8px; overflow:hidden;}
-    .panel h3{margin:6px 0 12px; font-size:14px; color:#dce;}
-    textarea#mdOut{width:100%; min-height:420px; resize:vertical; padding:10px; background:#0b0d12; color:#e6e6e6; border:1px solid #262a35; border-radius:8px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:13px; line-height:1.5; white-space:pre-wrap; word-break:break-word;}
-    .hint{font-size:12px; color:var(--muted); margin-top:8px;}
-    .grid{display:grid; gap:10px;}
-    .row{display:flex; gap:8px; flex-wrap:wrap;}
-    .kbd{background:#151922; border:1px solid #2a2e3a; padding:3px 6px; border-radius:6px; font-family:ui-monospace,monospace; font-size:12px;}
-    footer{color:#889; text-align:center; padding:18px 8px;}
-    @media (max-width:1100px){ .layout{grid-template-columns:1fr;} textarea#mdOut{min-height:260px;} }
-
-    /* mobile tweaks */
-    @media (max-width:640px){
-      .title{font-size:16px;}
-      button, label.btn{padding:8px 10px; font-size:13px;}
-      .toolbar{justify-content:flex-start;}
-    }
-    .preview{background:#071018; color:#e6e6e6; padding:12px; border-radius:8px; border:1px solid #23272c; overflow:auto;}
-    .controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本語対応Markdownエディタ</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css" id="highlight-theme">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            font-size: 16px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 40px);
+        }
+        .toolbar {
+            background-color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            overflow-x: auto;
+            position: sticky;
+            top: 10px;
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        body.dark .toolbar {
+            background-color: #2d2d2d;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .toolbar button {
+            padding: 8px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        body.dark .toolbar button {
+            background-color: #1e90ff;
+        }
+        .toolbar button:hover {
+            background-color: #0056b3;
+        }
+        .toolbar button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .editor-container {
+            display: flex;
+            flex: 1;
+            gap: 15px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        .editor, .preview {
+            flex: 1;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-y: auto;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        body.dark .editor, body.dark .preview {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        .editor {
+            min-height: 500px;
+            outline: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.7;
+            font-size: 16px;
+        }
+        .preview {
+            font-family: 'Noto Sans JP', monospace;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .preview pre code {
+            font-size: 14px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .action-buttons button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        #copy-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        #copy-btn:hover {
+            background-color: #218838;
+        }
+        #export-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        #export-btn:hover {
+            background-color: #5a6268;
+        }
+        #theme-toggle {
+            background-color: #ffc107;
+            color: #000;
+        }
+        #theme-toggle:hover {
+            background-color: #e0a800;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+        }
+        body.dark select {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column;
+            }
+            .preview {
+                margin-top: 15px;
+            }
+            .toolbar {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 10px;
+            }
+            .toolbar button {
+                min-width: 36px;
+                font-size: 12px;
+                padding: 6px;
+            }
+            .editor, .preview {
+                font-size: 14px;
+            }
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="wrap top-row">
-      <div>
-        <div class="title">Markdown Maker — WYSIWYG → Markdown</div>
-        <div class="hint" style="margin-top:6px;">編集して「Markdownに変換」または右側の出力をコピーしてください。モバイル対応。</div>
-      </div>
-
-      <div class="toolbar">
-        <button id="btnToggle" class="small">モード切替 WYSIWYG/Markdown</button>
-        <button id="btnToMd" class="small">Markdownに変換</button>
-        <button id="btnPreview" class="small">プレビュー切替</button>
-        <button id="btnCopy" class="small">コピー</button>
-        <button id="btnDownload" class="small">.md ダウンロード</button>
-        <label class="btn small" title="Markdownを読み込み（.md）">
-          読み込み(.md)
-          <input id="mdFile" type="file" accept=".md,.markdown,text/markdown,text/plain" style="display:none">
-        </label>
-        <button id="btnClear" class="small">クリア</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <div class="layout">
-      <!-- Editor area -->
-      <section class="card" aria-label="Editor">
-        <div id="editor"></div>
-      </section>
-
-      <!-- Right panel -->
-      <aside class="panel card">
-        <h3>Markdown 出力 / プレビュー</h3>
-        <div id="outputContainer">
-          <textarea id="mdOut" placeholder="ここに Markdown が表示されます。『Markdownに変換』または自動出力で表示されます。"></textarea>
-          <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
-            <button id="btnCopy2" class="small">コピー</button>
-            <button id="btnDownload2" class="small">.md ダウンロード</button>
-            <button id="btnClearImages" class="small">埋め込み画像を外す（data:uri）</button>
-          </div>
-          <p class="hint">画像は URL 挿入またはドラッグ/貼り付けで data:URI として埋め込めます（data:URI は容量が大きくなるので、最終的には GitHub にアップして相対パスにすることを推奨します）。</p>
+    <div class="container">
+        <div class="toolbar">
+            <button onclick="format('bold')" title="太字 (Ctrl+B)"><i class="fas fa-bold"></i></button>
+            <button onclick="format('italic')" title="斜体 (Ctrl+I)"><i class="fas fa-italic"></i></button>
+            <button onclick="format('underline')" title="下線 (Ctrl+U)"><i class="fas fa-underline"></i></button>
+            <button onclick="format('strikeThrough')" title="取り消し線"><i class="fas fa-strikethrough"></i></button>
+            <button onclick="formatHeading(1)" title="見出し1 (#)">H1</button>
+            <button onclick="formatHeading(2)" title="見出し2 (##)">H2</button>
+            <button onclick="formatHeading(3)" title="見出し3 (###)">H3</button>
+            <button onclick="format('insertUnorderedList')" title="箇条書き"><i class="fas fa-list-ul"></i></button>
+            <button onclick="format('insertOrderedList')" title="番号付きリスト"><i class="fas fa-list-ol"></i></button>
+            <button onclick="format('indent')" title="インデント"><i class="fas fa-indent"></i></button>
+            <button onclick="format('outdent')" title="インデント解除"><i class="fas fa-outdent"></i></button>
+            <button onclick="insertLink()" title="リンク挿入"><i class="fas fa-link"></i></button>
+            <button onclick="insertImage()" title="画像挿入"><i class="fas fa-image"></i></button>
+            <button onclick="insertCodeBlock()" title="コードブロック"><i class="fas fa-code"></i></button>
+            <button onclick="insertBlockquote()" title="引用"><i class="fas fa-quote-left"></i></button>
+            <button onclick="insertHorizontalRule()" title="水平線"><i class="fas fa-minus"></i></button>
+            <button onclick="insertTable()" title="表を挿入"><i class="fas fa-table"></i></button>
+            <button onclick="insertTaskList()" title="タスクリスト"><i class="fas fa-tasks"></i></button>
+            <button onclick="format('undo')" title="元に戻す (Ctrl+Z)"><i class="fas fa-undo"></i></button>
+            <button onclick="format('redo')" title="やり直し (Ctrl+Y)"><i class="fas fa-redo"></i></button>
+            <select onchange="changeFontSize(this.value)" title="フォントサイズ">
+                <option value="14">14px</option>
+                <option value="16" selected>16px</option>
+                <option value="18">18px</option>
+                <option value="20">20px</option>
+            </select>
         </div>
-
-        <hr style="border-color:#222; margin:12px 0;">
-        <div class="grid">
-          <h3>クイック挿入</h3>
-          <div class="row">
-            <button data-snippet="# 見出し1" class="small">H1</button>
-            <button data-snippet="## 見出し2" class="small">H2</button>
-            <button data-snippet="### 見出し3" class="small">H3</button>
-            <button data-snippet="**太字**" class="small">太字</button>
-            <button data-snippet="*斜体*" class="small">斜体</button>
-            <button data-snippet="~~打消し~~" class="small">打消し</button>
-          </div>
-          <div class="row">
-            <button id="btnQuote" class="small">引用</button>
-            <button id="btnList" class="small">箇条書き</button>
-            <button id="btnOrdered" class="small">番号リスト</button>
-            <button id="btnTask" class="small">タスクリスト</button>
-            <button id="btnHr" class="small">区切り線</button>
-          </div>
-          <div class="row">
-            <button id="btnLink" class="small">リンク挿入</button>
-            <button id="btnImage" class="small">画像 URL 挿入</button>
-            <button id="btnFigure" class="small">画像 with キャプション</button>
-          </div>
-          <div class="row">
-            <button id="btnTable" class="small">表(3x3)</button>
-            <button id="btnCode" class="small">コードブロック</button>
-            <button id="btnFootnote" class="small">脚注挿入</button>
-            <button id="btnDefList" class="small">定義リスト</button>
-          </div>
-          <p class="hint">貼り付け：画像を直接貼ると自動で data:URI として挿入されます（ブラウザ依存）。</p>
+        <div class="editor-container">
+            <div id="editor" contenteditable="true" class="editor">ここにテキストを入力して、Markdownを簡単に作成！</div>
+            <div id="preview" class="preview"></div>
         </div>
-      </aside>
+        <div class="action-buttons">
+            <button id="copy-btn" onclick="copyMarkdown()">Markdownをコピー</button>
+            <button id="export-btn" onclick="exportMarkdown()">Markdownをエクスポート</button>
+            <button id="theme-toggle" onclick="toggleTheme()">ダークモード切替</button>
+        </div>
     </div>
 
-    <!-- Preview modal (on small screens) -->
-    <div id="previewModal" style="display:none; margin-top:12px;">
-      <div class="card preview" id="previewContent"></div>
-    </div>
-  </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>
+        // 初期化
+        hljs.highlightAll();
+        let isDarkMode = false;
 
-  <footer>
-    GFM 対応：見出し / 強調 / リスト / チェックリスト / 引用 / 表 / コードブロック / 脚注(挿入補助) / 定義リスト(挿入補助) / 画像(貼付・URL) 等。
-  </footer>
-
-  <script>
-    // wait until toastui loaded
-    (function waitForToast(){ 
-      if(typeof toastui === 'undefined' || !toastui.Editor){
-        // retry a few times then warn
-        if(!window._toastRetry) window._toastRetry = 0;
-        window._toastRetry++;
-        if(window._toastRetry > 30){
-          console.error('Toast UI Editor not found. Ensure CDN script loaded.');
-          return;
+        function format(command) {
+            document.execCommand(command, false, null);
+            updatePreview();
         }
-        return setTimeout(waitForToast, 150);
-      }
-      initEditor();
-    })();
 
-    function initEditor(){
-      // --- 初期化：Toast UI Editor ---
-      const editor = new toastui.Editor({
-        el: document.querySelector('#editor'),
-        height: window.innerWidth < 800 ? '420px' : '640px',
-        initialEditType: 'wysiwyg',
-        previewStyle: 'vertical',
-        placeholder: 'ここに入力してください。見たまま編集（WYSIWYG）で書けます。',
-        useCommandShortcut: true,
-        toolbarItems: [
-          ['heading', 'bold', 'italic', 'strike'],
-          ['hr', 'quote'],
-          ['ul', 'ol', 'task'],
-          ['link', 'image'],
-          ['code', 'codeblock', 'table']
-        ],
-        usageStatistics: false,
-      });
-
-      // update output whenever editor changes
-      function updateOutput() {
-        try {
-          const md = editor.getMarkdown();
-          document.getElementById('mdOut').value = md;
-          // update preview (render markdown to HTML using editor's markdown->HTML)
-          const html = editor.getHTML();
-          document.getElementById('previewContent').innerHTML = html;
-          // re-run prism highlight
-          Prism.highlightAll();
-        } catch(e) {
-          console.error('updateOutput error', e);
+        function formatHeading(level) {
+            document.execCommand('formatBlock', false, `h${level}`);
+            updatePreview();
         }
-      }
-      editor.on('change', () => updateOutput());
-      // initial update
-      updateOutput();
 
-      // --- utility ---
-      const $ = sel => document.querySelector(sel);
-      function copyText(text){
-        if(navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
-        const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); } finally { ta.remove(); }
-        return Promise.resolve();
-      }
-      function downloadFile(filename, text) {
-        const blob = new Blob([text], {type:'text/markdown;charset=utf-8'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
-        document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 100);
-      }
+        function insertLink() {
+            const url = prompt('リンクのURLを入力してください:');
+            if (url) {
+                const text = document.getSelection().toString() || 'リンク';
+                document.execCommand('insertHTML', false, `<a href="${url}">${text}</a>`);
+                updatePreview();
+            }
+        }
 
-      // --- Buttons ---
-      $('#btnToMd').addEventListener('click', () => updateOutput());
-      $('#btnToggle').addEventListener('click', () => {
-        const mode = editor.getCurrentMode();
-        editor.changeMode(mode === 'wysiwyg' ? 'markdown' : 'wysiwyg', true);
-      });
+        function insertImage() {
+            const url = prompt('画像のURLを入力してください:') || '';
+            if (url) {
+                document.execCommand('insertHTML', false, `<img src="${url}" alt="画像" style="max-width:100%;">`);
+                updatePreview();
+            }
+        }
 
-      $('#btnCopy').addEventListener('click', async () => {
-        await copyText($('#mdOut').value || editor.getMarkdown());
-        const old = $('#btnCopy').textContent;
-        $('#btnCopy').textContent = 'コピーしました！';
-        setTimeout(()=> $('#btnCopy').textContent = old, 1400);
-      });
-      $('#btnCopy2').addEventListener('click', async () => {
-        await copyText($('#mdOut').value || editor.getMarkdown());
-        alert('コピーしました！');
-      });
+        function insertCodeBlock() {
+            const lang = prompt('コードの言語を入力してください (例: javascript, python):') || '';
+            const code = prompt('コードを入力してください:') || 'コード例';
+            const html = `<pre><code class="language-${lang}">${code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+            document.execCommand('insertHTML', false, html);
+            updatePreview();
+        }
 
-      $('#btnDownload').addEventListener('click', () => downloadFile('document.md', $('#mdOut').value || editor.getMarkdown()));
-      $('#btnDownload2').addEventListener('click', () => downloadFile('document.md', $('#mdOut').value || editor.getMarkdown()));
-      $('#btnClear').addEventListener('click', ()=> {
-        if(!confirm('エディタの内容をクリアしますか？')) return;
-        editor.setMarkdown('');
-        $('#mdOut').value = '';
-        updateOutput();
-      });
+        function insertBlockquote() {
+            document.execCommand('formatBlock', false, 'blockquote');
+            updatePreview();
+        }
 
-      // load .md file
-      $('#mdFile').addEventListener('change', async (ev) => {
-        const f = ev.target.files && ev.target.files[0]; if(!f) return;
-        const text = await f.text();
-        editor.setMarkdown(text);
-        updateOutput();
-        ev.target.value = '';
-      });
+        function insertHorizontalRule() {
+            document.execCommand('insertHorizontalRule');
+            updatePreview();
+        }
 
-      // quick snippets
-      document.querySelectorAll('button[data-snippet]').forEach(b => {
-        b.addEventListener('click', ()=> {
-          const s = b.getAttribute('data-snippet');
-          const cur = editor.getMarkdown();
-          editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + s + '\n');
+        function insertTable() {
+            const rows = parseInt(prompt('行数を入力してください (例: 2):') || 2);
+            const cols = parseInt(prompt('列数を入力してください (例: 2):') || 2);
+            if (rows > 0 && cols > 0) {
+                let tableHTML = '<table border="1" style="border-collapse: collapse; width: 100%;">';
+                tableHTML += '<tr>' + '<th>ヘッダ</th>'.repeat(cols) + '</tr>';
+                for (let i = 0; i < rows - 1; i++) {
+                    tableHTML += '<tr>' + '<td>内容</td>'.repeat(cols) + '</tr>';
+                }
+                tableHTML += '</table>';
+                document.execCommand('insertHTML', false, tableHTML);
+                updatePreview();
+            }
+        }
+
+        function insertTaskList() {
+            const items = prompt('タスクリストの項目をカンマで区切って入力してください (例: タスク1,タスク2):')?.split(',') || ['タスク1'];
+            let html = '<ul>';
+            items.forEach(item => {
+                html += `<li><input type="checkbox"> ${item.trim()}</li>`;
+            });
+            html += '</ul>';
+            document.execCommand('insertHTML', false, html);
+            updatePreview();
+        }
+
+        function changeFontSize(size) {
+            document.getElementById('editor').style.fontSize = `${size}px`;
+            document.getElementById('preview').style.fontSize = `${size - 1}px`;
+        }
+
+        function htmlToMarkdown(html) {
+            let md = html
+                // 見出し
+                .replace(/<h1>(.*?)<\/h1>/g, '# $1\n\n')
+                .replace(/<h2>(.*?)<\/h2>/g, '## $1\n\n')
+                .replace(/<h3>(.*?)<\/h3>/g, '### $1\n\n')
+                // テキスト装飾
+                .replace(/<b>(.*?)<\/b>/g, '**$1**')
+                .replace(/<strong>(.*?)<\/strong>/g, '**$1**')
+                .replace(/<i>(.*?)<\/i>/g, '*$1*')
+                .replace(/<em>(.*?)<\/em>/g, '*$1*')
+                .replace(/<u>(.*?)<\/u>/g, '<u>$1</u>')
+                .replace(/<strike>(.*?)<\/strike>/g, '~~$1~~')
+                .replace(/<del>(.*?)<\/del>/g, '~~$1~~')
+                // リスト
+                .replace(/<ul>(.*?)<\/ul>/gs, (match, content) => {
+                    return content
+                        .replace(/<li><input type="checkbox"[^>]*>\s*(.*?)<\/li>/g, '- [ ] $1\n')
+                        .replace(/<li>(.*?)<\/li>/g, '- $1\n') + '\n';
+                })
+                .replace(/<ol>(.*?)<\/ol>/gs, (match, content) => {
+                    let count = 1;
+                    return content.replace(/<li>(.*?)<\/li>/g, () => `${count++}. $1\n`) + '\n';
+                })
+                // リンクと画像
+                .replace(/<a href="(.*?)">(.*?)<\/a>/g, '[$2]($1)')
+                .replace(/<img src="(.*?)" alt="(.*?)"[^>]*>/g, '![$2]($1)')
+                // コード
+                .replace(/<pre><code class="language-(.*?)"[^>]*>(.*?)<\/code><\/pre>/gs, '```$1\n$2\n```\n')
+                .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```\n')
+                .replace(/<code>(.*?)<\/code>/g, '`$1`')
+                // 引用
+                .replace(/<blockquote>(.*?)<\/blockquote>/gs, (match, content) => {
+                    return '> ' + content.replace(/\n/g, '\n> ') + '\n\n';
+                })
+                // 水平線
+                .replace(/<hr>/g, '---\n')
+                // 表
+                .replace(/<table[^>]*>(.*?)<\/table>/gs, (match, content) => {
+                    let rows = content.match(/<tr>(.*?)<\/tr>/g);
+                    if (!rows) return '';
+                    let mdTable = '';
+                    rows.forEach((row, index) => {
+                        let cells = row.match(/<(td|th)>(.*?)<\/(td|th)>/g);
+                        if (cells) {
+                            mdTable += '| ' + cells.map(cell => cell.replace(/<(td|th)>(.*?)<\/(td|th)>/, '$2').trim()).join(' | ') + ' |\n';
+                            if (index === 0) {
+                                mdTable += '| ' + cells.map(() => '---').join(' | ') + ' |\n';
+                            }
+                        }
+                    });
+                    return mdTable + '\n';
+                })
+                // その他
+                .replace(/<p>(.*?)<\/p>/g, '$1\n\n')
+                .replace(/<br>/g, '\n')
+                .replace(/&nbsp;/g, ' ')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/\n\s*\n\s*\n+/g, '\n\n')
+                .trim();
+            return md;
+        }
+
+        function updatePreview() {
+            const editor = document.getElementById('editor');
+            const preview = document.getElementById('preview');
+            preview.innerHTML = `<pre><code class="language-markdown">${htmlToMarkdown(editor.innerHTML)}</code></pre>`;
+            hljs.highlightAll();
+        }
+
+        function copyMarkdown() {
+            const preview = document.getElementById('preview').textContent;
+            navigator.clipboard.writeText(preview).then(() => {
+                alert('Markdownをクリップボードにコピーしました！');
+            });
+        }
+
+        function exportMarkdown() {
+            const preview = document.getElementById('preview').textContent;
+            const blob = new Blob([preview], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'document.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark');
+            const themeLink = document.getElementById('highlight-theme');
+            themeLink.href = isDarkMode
+                ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css'
+                : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css';
+            document.getElementById('theme-toggle').innerHTML = isDarkMode ? 'ライトモード' : 'ダークモード';
+        }
+
+        // イベントリスナー
+        const editor = document.getElementById('editor');
+        editor.addEventListener('input', updatePreview);
+        editor.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            document.execCommand('insertText', false, text);
         });
-      });
 
-      // dedicated quick insert buttons
-      $('#btnQuote').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + '> 引用テキスト\n> > 二重引用\n');
-      });
-      $('#btnList').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + '- 項目1\n- 項目2\n  - サブ項目\n');
-      });
-      $('#btnOrdered').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + '1. 最初\n2. 次\n');
-      });
-      $('#btnTask').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + '- [ ] 未完了タスク\n- [x] 完了タスク\n');
-      });
-      $('#btnHr').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + '\n---\n');
-      });
-      $('#btnTable').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        const table = '| ヘッダー1 | ヘッダー2 | ヘッダー3 |\n| --- | --- | --- |\n| A | B | C |\n';
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + table);
-      });
-      $('#btnCode').addEventListener('click', ()=>{
-        const lang = prompt('コード言語（例: bash, python, javascript）を入力（空可）') || '';
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + '```' + lang + '\n// your code here\n```\n');
-      });
-
-      // link insert
-      $('#btnLink').addEventListener('click', ()=>{
-        const text = prompt('リンクテキストを入力（例: Google）') || 'リンク';
-        const url = prompt('リンク先URLを入力（例: https://example.com）') || '';
-        if(!url) return;
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + `[${text}](${url})\n`);
-      });
-
-      // image url insert
-      $('#btnImage').addEventListener('click', ()=>{
-        const url = prompt('画像の URL を入力（https://...）');
-        if(!url) return;
-        const alt = prompt('代替テキスト (alt) を入力（任意）') || '';
-        const cur = editor.getMarkdown();
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + `![${alt}](${url})\n`);
-      });
-
-      // figure (image + caption)
-      $('#btnFigure').addEventListener('click', ()=>{
-        const url = prompt('画像の URL を入力（https://...）');
-        if(!url) return;
-        const alt = prompt('代替テキスト (alt) を入力（任意）') || '';
-        const caption = prompt('キャプションを入力（任意）') || '';
-        const cur = editor.getMarkdown();
-        const block = `![${alt}](${url})\n\n*${caption}*\n`;
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + block);
-      });
-
-      // footnote insert
-      $('#btnFootnote').addEventListener('click', ()=>{
-        const id = prompt('脚注番号（例: 1）を入力（自動生成は ok で空にすると 1 が使われます）') || '1';
-        const text = prompt('脚注の本文を入力') || '注釈';
-        const cur = editor.getMarkdown();
-        const foot = `[^${id}]`;
-        const footDef = `\n[^${id}]: ${text}\n`;
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + foot + '\n' + (cur.includes(`[^${id}]:`) ? '' : footDef));
-      });
-
-      // definition list insert (snippet)
-      $('#btnDefList').addEventListener('click', ()=>{
-        const cur = editor.getMarkdown();
-        const def = `Term 1\n: Definition 1\n\nTerm 2\n: Definition 2\n`;
-        editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + def);
-      });
-
-      // remove data:uri images - replace data: URIs with placeholder or blank
-      $('#btnClearImages').addEventListener('click', ()=>{
-        let md = $('#mdOut').value || editor.getMarkdown();
-        const num = (md.match(/!\[.*?\]\(data:/g) || []).length;
-        if(num === 0) { alert('埋め込み画像（data:URI）はありません'); return; }
-        if(!confirm(`埋め込み画像（data:URI）が ${num} 件あります。すべて削除してよいですか？`)) return;
-        md = md.replace(/!\[([^\]]*?)\]\(data:[^\)]+\)/g, '![$1](REPLACE_WITH_UPLOADED_URL)');
-        editor.setMarkdown(md);
-        updateOutput();
-      });
-
-      // --- drag & paste images: convert to data:uri and insert as markdown image
-      function fileToDataUrl(file) {
-        return new Promise((res, rej) => {
-          const r = new FileReader();
-          r.onload = () => res(r.result);
-          r.onerror = rej;
-          r.readAsDataURL(file);
+        // ドラッグ＆ドロップで画像挿入
+        editor.addEventListener('dragover', (e) => e.preventDefault());
+        editor.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    document.execCommand('insertHTML', false, `<img src="${reader.result}" alt="画像" style="max-width:100%;">`);
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
         });
-      }
-      document.addEventListener('paste', async (ev) => {
-        const items = ev.clipboardData && ev.clipboardData.items;
-        if(!items) return;
-        for(let i=0;i<items.length;i++){
-          const it = items[i];
-          if(it.kind === 'file'){
-            const file = it.getAsFile();
-            if(!file) continue;
-            if(file.size > 1024*1024*3) { if(!confirm('貼り付けられた画像は大きめ（>3MB）です。直接 data:URI に埋め込むとMarkdownが非常に長くなります。続行しますか？')) continue; }
-            const dataurl = await fileToDataUrl(file);
-            const alt = file.name || '';
-            const cur = editor.getMarkdown();
-            editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + `![${alt}](${dataurl})\n`);
-          }
-        }
-        updateOutput();
-      });
-      // drag & drop files onto editor
-      const edEl = document.querySelector('#editor');
-      edEl.addEventListener('dragover', ev => ev.preventDefault());
-      edEl.addEventListener('drop', async (ev)=>{
-        ev.preventDefault();
-        const files = ev.dataTransfer && ev.dataTransfer.files;
-        if(!files || files.length===0) return;
-        for(let i=0;i<files.length;i++){
-          const f = files[i];
-          if(!f.type.startsWith('image/')) continue;
-          if(f.size > 1024*1024*5){ if(!confirm('画像サイズが大きいです（>5MB）。data:URI埋め込みすると非常に長くなります。続行しますか？')) continue; }
-          const dataurl = await fileToDataUrl(f);
-          const cur = editor.getMarkdown();
-          editor.setMarkdown(cur + (cur.endsWith('\n') ? '' : '\n') + `![${f.name}](${dataurl})\n`);
-        }
-        updateOutput();
-      });
 
-      // preview toggle (small screens)
-      let previewShown = false;
-      $('#btnPreview').addEventListener('click', ()=>{
-        previewShown = !previewShown;
-        const pm = document.getElementById('previewModal');
-        pm.style.display = previewShown ? 'block' : 'none';
-        updateOutput();
-        if(previewShown) pm.scrollIntoView({behavior:'smooth'});
-      });
+        // ショートカットキー
+        editor.addEventListener('keydown', (e) => {
+            if (e.ctrlKey) {
+                switch (e.key) {
+                    case 'b': e.preventDefault(); format('bold'); break;
+                    case 'i': e.preventDefault(); format('italic'); break;
+                    case 'u': e.preventDefault(); format('underline'); break;
+                    case 'z': e.preventDefault(); format('undo'); break;
+                    case 'y': e.preventDefault(); format('redo'); break;
+                }
+            }
+        });
 
-      // update output regularly (throttle)
-      let tmr = null;
-      function scheduleUpdate() {
-        if(tmr) clearTimeout(tmr);
-        tmr = setTimeout(()=>{ updateOutput(); tmr = null; }, 200);
-      }
-      editor.on('change', scheduleUpdate);
-
-      // initial call
-      updateOutput();
-
-      // auto-update MD out every few seconds in case user didn't click
-      setInterval(()=> { $('#mdOut').value = editor.getMarkdown(); }, 2000);
-
-      // copy/download right-panel buttons
-      $('#btnCopy2').addEventListener('click', async ()=> {
-        await copyText($('#mdOut').value || editor.getMarkdown()); alert('コピーしました！');
-      });
-
-      // small helpers: keep preview highlighted
-      document.addEventListener('DOMContentLoaded', ()=> Prism.highlightAll());
-    } // end initEditor
-  </script>
+        // 初期プレビュー
+        updatePreview();
+    </script>
 </body>
 </html>
